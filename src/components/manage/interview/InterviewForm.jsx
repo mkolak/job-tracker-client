@@ -36,8 +36,6 @@ function InterviewForm({ job }) {
     mutate(newInterview);
   }
 
-  console.log(job.appliedAt);
-
   return (
     <form
       className="text-xs sm:text-base grid grid-cols-1 sm:grid-cols-2 gap-y-5 items-center"
