@@ -1,8 +1,9 @@
-# React + Vite
+# Job Tracker Client
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This project is built using Vite + React for the frontend and Express for the backend. It requires certain environment variables to be set up for proper configuration.
 
-Currently, two official plugins are available:
+## Environment Setup
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Before running the project, you need to create a `.env` file in the root directory of the project. This file will store your environment-specific settings.
+After creating `.env` file, add a following variable:
+VITE_API_URL=[your-api-url]
