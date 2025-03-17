@@ -1,29 +1,14 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { formatDate } from "../../../utils/helpers";
-
-import { InterviewsService } from "../../../services/InterviewsService";
 
 import Button from "../../../ui/Button";
 import Modal from "../../../ui/Modal";
 import { FiX } from "react-icons/fi";
+import { observer } from "mobx-react-lite";
+import { interviewsStore } from "../../../stores/InterviewsStore";
 
 function InterviewCard({ interview }) {
   const [openModal, setOpenModal] = useState(false);
-  const queryClient = useQueryClient();
-
-  const interviewsService = new InterviewsService();
-
-  const { isPending, mutate } = useMutation({
-    mutationFn: (id) => interviewsService.deleteInterview(id),
-    onSuccess: () => {
-      alert("Success");
-      queryClient.invalidateQueries([`job_${interview.jobAdvertisementId}`]);
-      queryClient.invalidateQueries([`interviews`]);
-      setOpenModal(false);
-    },
-    onError: (err) => alert(err.message),
-  });
 
   function onDelete() {
     setOpenModal(true);
@@ -42,7 +27,7 @@ function InterviewCard({ interview }) {
       <Button
         type="danger"
         action={onDelete}
-        disabled={isPending}
+        disabled={interviewsStore.isLoading}
         className="gap-0.5 p-1 sm:p-2 text-xs sm:text-sm flex items-center justify-center"
       >
         <FiX />
@@ -50,7 +35,7 @@ function InterviewCard({ interview }) {
       {openModal && (
         <Modal
           onCancel={() => setOpenModal(false)}
-          onConfirm={() => mutate(interview._id)}
+          onConfirm={() => interviewsStore.deleteInterview(interview._id)}
         >
           Are you sure you want to delete?
         </Modal>
@@ -59,4 +44,4 @@ function InterviewCard({ interview }) {
   );
 }
 
-export default InterviewCard;
+export default observer(InterviewCard);

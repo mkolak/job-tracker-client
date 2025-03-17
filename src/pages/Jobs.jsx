@@ -1,7 +1,7 @@
-import { useState } from "react";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
+import { observer } from "mobx-react-lite";
+import { jobsStore } from "../stores/JobsStore";
 import { useSearchParams } from "react-router-dom";
-import { JobsService } from "../services/JobsService";
 
 import JobsSearch from "../components/jobs/JobsSearch";
 import JobsSidebar from "../components/jobs/JobsSidebar";
@@ -11,39 +11,27 @@ import Loader from "../ui/Loader";
 
 function Jobs() {
   const [searchParams] = useSearchParams();
-
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const query = useMemo(
+    () => Object.fromEntries(searchParams.entries()),
+    [searchParams]
+  );
 
-  const query = Object.fromEntries(searchParams.entries());
+  useEffect(() => {
+    jobsStore.fetchJobs(query, 1);
+  }, [query]);
 
-  const jobsService = new JobsService();
+  if (jobsStore.error)
+    return <div>Error loading data: {jobsStore.error.message}</div>;
 
-  const { data, isLoading, isError, fetchNextPage, isFetchingNextPage } =
-    useInfiniteQuery({
-      queryKey: ["jobs", query],
-      queryFn: ({ queryKey, pageParam = 1 }) => {
-        const [, params] = queryKey;
-        return jobsService.getJobs(params, pageParam);
-      },
-      initialPageParam: 1,
-      getNextPageParam: (lastPage) => lastPage.nextPage,
-    });
-
-  if (isError) return <div>Error loading data</div>;
-
-  const jobs =
-    data?.pages
-      .flat()
-      .reduce((allJobs, page) => [...allJobs, ...page.jobs], []) || [];
-
-  const totalJobs = data?.pages.at(-1).nbHits || 0;
-  let shownJobs = data?.pages.at(-1).currentPage * 10 || 0;
-  if (shownJobs > totalJobs) shownJobs = totalJobs;
   return (
     <div className="flex flex-col flex-1 min-h-0">
       <div className="border-b border-gray-200 p-4">
         <JobsSearch />
-        <JobsSummary total={totalJobs} shown={shownJobs} />
+        <JobsSummary
+          total={jobsStore.totalJobs}
+          shown={jobsStore.jobs.length}
+        />
       </div>
 
       {/* ON SMALL SCREEN */}
@@ -73,13 +61,13 @@ function Jobs() {
           <JobsSidebar />
         </div>
         <div className="w-full sm:w-1/2 md:w-3/5 lg:w-2/3 xl:w-3/4 bg-stone-100 overflow-auto">
-          {isLoading ? (
+          {jobsStore.isLoading ? (
             <Loader />
           ) : (
             <JobsMain
-              jobs={jobs}
-              fetchNextPage={fetchNextPage}
-              isFetchingNextPage={isFetchingNextPage}
+              jobs={jobsStore.jobs}
+              fetchNextPage={() => jobsStore.fetchNextPage(query)}
+              isFetchingNextPage={jobsStore.isFetchingNextPage}
             />
           )}
         </div>
@@ -88,4 +76,4 @@ function Jobs() {
   );
 }
 
-export default Jobs;
+export default observer(Jobs);

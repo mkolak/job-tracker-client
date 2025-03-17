@@ -1,25 +1,20 @@
-import { useQuery } from "@tanstack/react-query";
+import { observer } from "mobx-react-lite";
+import { useEffect } from "react";
+import { interviewsStore } from "../../stores/InterviewsStore";
 import { useState } from "react";
-
-import { InterviewsService } from "../../services/InterviewsService";
 
 import { formatDate } from "../../utils/helpers";
 
 function DashboardInterviews() {
   const [isUpcoming, setIsUpcoming] = useState(true);
-  const interviewsService = new InterviewsService();
 
-  const { data } = useQuery({
-    queryKey: ["interviews"],
-    queryFn: () => interviewsService.getInterviews(),
-  });
+  useEffect(() => {
+    interviewsStore.fetchInterviews();
+  }, []);
 
-  const interviews =
-    data?.interviews.filter((interview) =>
-      isUpcoming
-        ? new Date(interview.datetime).getTime() >= new Date().getTime()
-        : new Date(interview.datetime).getTime() < new Date().getTime()
-    ) || [];
+  const interviews = isUpcoming
+    ? interviewsStore.upcomingInterviews
+    : interviewsStore.pastInterviews;
 
   return (
     <div className="flex flex-col gap-4 items-center h-full">
@@ -61,4 +56,4 @@ function DashboardInterviews() {
   );
 }
 
-export default DashboardInterviews;
+export default observer(DashboardInterviews);

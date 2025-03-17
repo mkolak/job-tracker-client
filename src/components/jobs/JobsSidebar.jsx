@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 
-import { StatsService } from "../../services/StatsService";
+import { observer } from "mobx-react-lite";
+import { statsStore } from "../../stores/StatsStore";
 
 import JobsSidebarHeader from "./sidebar/JobsSidebarHeader";
 import JobsSidebarRadioFilter from "./sidebar/JobsSidebarRadioFilter";
@@ -29,29 +29,18 @@ function JobsSidebar() {
   );
   const [endDate, setEndDate] = useState(searchParams.get("endDate") || null);
 
-  const query = Object.fromEntries(searchParams.entries());
+  const query = useMemo(
+    () => Object.fromEntries(searchParams.entries()),
+    [searchParams]
+  );
 
-  const statsService = new StatsService();
+  useEffect(() => {
+    statsStore.fetchStatus(query);
+    statsStore.fetchLocations(query);
+  }, [query]);
 
-  const { data: locationData } = useQuery({
-    queryKey: ["locations", query],
-    queryFn: ({ queryKey }) => {
-      const [, params] = queryKey;
-      return statsService.getLocations(params);
-    },
-  });
-
-  const locations = locationData?.locations.filter((val) => val._id) || [];
-
-  const { data: statusData } = useQuery({
-    queryKey: ["status", query],
-    queryFn: ({ queryKey }) => {
-      const [, params] = queryKey;
-      return statsService.getStatusCount(params);
-    },
-  });
-
-  const statusCount = statusData?.status || [];
+  const statusCount = statsStore.status;
+  const locations = statsStore.locations;
 
   function handleApply(e) {
     e.preventDefault();
@@ -129,4 +118,4 @@ function JobsSidebar() {
   );
 }
 
-export default JobsSidebar;
+export default observer(JobsSidebar);

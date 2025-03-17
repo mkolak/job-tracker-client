@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-
-import { JobsService } from "../../../services/JobsService";
+import { observer } from "mobx-react-lite";
+import { jobsStore } from "../../../stores/JobsStore";
 
 import Button from "../../../ui/Button";
 import Modal from "../../../ui/Modal";
@@ -12,24 +11,8 @@ import { FiEdit } from "react-icons/fi";
 const style = "gap-0.5 py-2 w-2/5 text-sm flex items-center justify-center";
 
 function JobsCardActionButtons({ show, id }) {
-  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [openModal, setOpenModal] = useState(false);
-
-  const jobsService = new JobsService();
-
-  const { isPending, mutate } = useMutation({
-    mutationFn: async (id) => await jobsService.deleteJob(id),
-    onSuccess: () => {
-      alert("Success");
-      queryClient.invalidateQueries(["jobs"]);
-      queryClient.invalidateQueries(["interviews"]);
-      queryClient.invalidateQueries(["monthly"]);
-      queryClient.invalidateQueries(["status"]);
-      navigate("/jobs");
-    },
-    onError: (err) => alert(err.message),
-  });
 
   function onDelete() {
     setOpenModal(true);
@@ -49,7 +32,7 @@ function JobsCardActionButtons({ show, id }) {
         type="danger"
         className={style}
         action={onDelete}
-        disabled={isPending}
+        disabled={jobsStore.isLoading}
       >
         <FiX />
         Delete
@@ -57,7 +40,7 @@ function JobsCardActionButtons({ show, id }) {
       {openModal && (
         <Modal
           onCancel={() => setOpenModal(false)}
-          onConfirm={() => mutate(id)}
+          onConfirm={() => jobsStore.deleteJob(id)}
         >
           Are you sure you want to delete?
         </Modal>
@@ -66,4 +49,4 @@ function JobsCardActionButtons({ show, id }) {
   );
 }
 
-export default JobsCardActionButtons;
+export default observer(JobsCardActionButtons);

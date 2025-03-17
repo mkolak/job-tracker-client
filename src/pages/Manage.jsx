@@ -1,7 +1,7 @@
+import { observer } from "mobx-react-lite";
+import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-
-import { JobsService } from "../services/JobsService";
+import { jobsStore } from "../stores/JobsStore";
 
 import ManageInterview from "../components/manage/ManageInterview";
 import ManageForm from "../components/manage/ManageForm";
@@ -10,43 +10,24 @@ import Loader from "../ui/Loader";
 function Manage() {
   const params = useParams();
   const id = params.id;
-
-  const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const jobsService = new JobsService();
 
-  const { data: jobData } = useQuery({
-    queryKey: [`job_${id}`, id],
-    queryFn: ({ queryKey }) => {
-      const [, id] = queryKey;
-      return jobsService.getJob(id);
-    },
-    enabled: Boolean(id),
-  });
+  useEffect(() => {
+    if (id) {
+      jobsStore
+        .fetchJob(id)
+        .then(() => {})
+        .catch((error) => console.error("Error fetching job:", error));
+    }
+  }, [id]);
 
-  const job = jobData?.job || "";
+  const job = jobsStore.currentJob;
 
-  const saveJob = async (data) => {
-    return id
-      ? await jobsService.editJob(id, data)
-      : await jobsService.createJob(data);
-  };
-
-  const { isPending, mutate } = useMutation({
-    mutationFn: saveJob,
-    onSuccess: () => {
-      alert("Success");
-      queryClient.invalidateQueries(["jobs"]);
-      queryClient.invalidateQueries(["monthly"]);
-      queryClient.invalidateQueries(["status"]);
-      if (id) queryClient.invalidateQueries([`job_${id}`]);
-      navigate("/jobs");
-    },
-    onError: (err) => alert(err.message),
-  });
+  if (!((id && job) || !id)) return <Loader />;
 
   function onSubmit(data) {
-    mutate(data);
+    jobsStore.saveJob(data, id);
+    navigate("/jobs");
   }
 
   return (
@@ -64,15 +45,7 @@ function Manage() {
               "Add new advertisement"
             )}
           </h1>
-          {(id && job) || !id ? (
-            <ManageForm
-              values={job}
-              onSubmit={onSubmit}
-              disableSubmit={isPending}
-            />
-          ) : (
-            <Loader />
-          )}
+          <ManageForm values={job} onSubmit={onSubmit} />
         </div>
       </div>
       <div className="w-1/2 h-full">
@@ -83,4 +56,4 @@ function Manage() {
   );
 }
 
-export default Manage;
+export default observer(Manage);

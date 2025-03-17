@@ -1,9 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
-
-import { StatsService } from "../../services/StatsService";
-
+import { observer } from "mobx-react-lite";
+import { useEffect } from "react";
+import { statsStore } from "../../stores/StatsStore";
 import { capitalize } from "../../utils/helpers";
-
 import Loader from "../../ui/Loader";
 
 const colors = {
@@ -14,19 +12,17 @@ const colors = {
 };
 
 function DashboardStatusStats() {
-  const statsService = new StatsService();
+  useEffect(() => {
+    statsStore.fetchStatus();
+  }, []);
 
-  const { data } = useQuery({
-    queryKey: ["status"],
-    queryFn: () => statsService.getStatusCount(),
-  });
-
-  let status = data?.status || [];
+  let status = statsStore.status;
 
   if (!status.length) return <Loader />;
 
   const totalApplications = status.reduce((acc, st) => acc + st.count, 0);
   status = [...status, { _id: "total", count: totalApplications }];
+
   return (
     <div className="h-full flex flex-col items-center">
       <h1 className="text-xl my-10 md:text-2xl font-semibold">
@@ -63,4 +59,4 @@ function DashboardStatusStats() {
   );
 }
 
-export default DashboardStatusStats;
+export default observer(DashboardStatusStats);

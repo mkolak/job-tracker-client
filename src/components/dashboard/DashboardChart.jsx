@@ -1,4 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { observer } from "mobx-react-lite";
+import { useEffect } from "react";
+import { statsStore } from "../../stores/StatsStore";
 import {
   BarChart,
   Bar,
@@ -8,24 +10,19 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-import { StatsService } from "../../services/StatsService";
-
 const calculateBarchartWidth = (numberOfItem = 6) => {
   if (numberOfItem > 6) return numberOfItem * 130;
   return "100%";
 };
 
 function DashboardChart() {
-  const statsService = new StatsService();
+  useEffect(() => {
+    statsStore.fetchMonthlyCount();
+  }, []);
 
-  const { data } = useQuery({
-    queryKey: ["monthly"],
-    queryFn: () => statsService.getMonthlyCount(),
-  });
+  let monthlyData = statsStore.monthlyCount;
 
-  let monthlyData = data?.stats || [];
-
-  if (!monthlyData.length) return null;
+  if (!monthlyData?.length) return null;
 
   monthlyData = monthlyData.map((entry) => ({
     month: `${entry.month}/${entry.year}`,
@@ -65,4 +62,4 @@ function DashboardChart() {
   );
 }
 
-export default DashboardChart;
+export default observer(DashboardChart);

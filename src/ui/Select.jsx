@@ -38,7 +38,6 @@ function Select({ value, options, setValue }) {
               key={option}
               className="px-4 py-2 cursor-pointer hover:bg-gray-100 text-gray-700"
               onClick={() => {
-                console.log("aaa");
                 setValue(option);
                 setIsDropdownOpen(false);
               }}
